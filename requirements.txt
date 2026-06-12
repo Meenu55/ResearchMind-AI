@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+langchain
+langchain-community
+langchain-google-genai
+chromadb
+sentence-transformers
+pypdf
+python-dotenv
+requests
+pandas
+numpy
+scikit-learn
+networkx
+plotly
+streamlit
