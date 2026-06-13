@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 
+from backend.routes.search import router
+
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {
-        "message": "ResearchMind AI Running"
-    }
+app.include_router(router)
