@@ -54,3 +54,18 @@ Paper:
     )
 
     return response.text
+
+def analyze_paper(
+    self,
+    pdf_path
+):
+
+    text = self.extract_text(
+        pdf_path
+    )
+
+    summary = self.summarize_paper(
+        text
+    )
+
+    return summary
