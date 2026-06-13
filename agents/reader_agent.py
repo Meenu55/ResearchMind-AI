@@ -1,4 +1,5 @@
 from pypdf import PdfReader
+from backend.gemini_client import model
 
 class ReaderAgent:
 
@@ -21,3 +22,35 @@ text = agent.extract_text(
 )
 
 print(text[:1000])
+
+def summarize_paper(self, text):
+
+    prompt = f"""
+
+Analyze this research paper.
+
+Extract:
+
+1. Research Objective
+
+2. Methodology
+
+3. Key Findings
+
+4. Limitations
+
+5. Future Work
+
+6. Short Summary
+
+Paper:
+
+{text[:20000]}
+
+"""
+
+    response = model.generate_content(
+        prompt
+    )
+
+    return response.text
