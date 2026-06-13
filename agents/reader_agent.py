@@ -1,6 +1,8 @@
 from pypdf import PdfReader
 from backend.gemini_client import model
 
+from pypdf import PdfReader
+
 class ReaderAgent:
 
     def extract_text(self, pdf_path):
@@ -11,18 +13,13 @@ class ReaderAgent:
 
         for page in reader.pages:
 
-            text += page.extract_text()
+            page_text = page.extract_text()
+
+            if page_text:
+                text += page_text
 
         return text
-
-agent = ReaderAgent()
-
-text = agent.extract_text(
-    "sample_paper.pdf"
-)
-
-print(text[:1000])
-
+    
 def summarize_paper(self, text):
 
     prompt = f"""
