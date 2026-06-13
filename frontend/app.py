@@ -31,3 +31,19 @@ if st.button("Search"):
         )
 
         st.divider()
+uploaded_file = st.file_uploader(
+    "Upload Research Paper",
+    type=["pdf"]
+)
+if uploaded_file:
+
+    files = {
+        "file": uploaded_file
+    }
+
+    response = requests.post(
+        "http://127.0.0.1:8000/upload",
+        files=files
+    )
+
+    st.success("Uploaded")
