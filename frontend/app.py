@@ -127,3 +127,28 @@ if st.button(
         st.error(
             "No documents returned"
         )
+
+st.header(
+    "Knowledge Graph"
+)
+
+topic = st.text_input(
+    "Research Topic"
+)
+
+if st.button(
+    "Explore Graph"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/graph",
+
+        params={
+            "topic": topic
+        }
+    )
+
+    st.write(
+        response.json()
+    )
