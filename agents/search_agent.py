@@ -1,8 +1,7 @@
 import requests
 import xml.etree.ElementTree as ET
-from backend.services.vector_service import (
-    store_paper
-)
+from backend.services.vector_service import store_paper
+import hashlib
 
 class SearchAgent:
 
@@ -24,6 +23,7 @@ class SearchAgent:
 
         papers = []
 
+
         for entry in root.findall(
             "atom:entry",
             namespace
@@ -39,13 +39,31 @@ class SearchAgent:
                 namespace
             ).text.strip()
 
+            # Unique ID for each paper
+            paper_id = hashlib.md5(
+                title.encode()
+            ).hexdigest()
+
+            try:
+
+                store_paper(
+                    paper_id=paper_id,
+                    title=title,
+                    abstract=summary
+                )
+
+            except Exception as e:
+
+                print(
+                    f"Vector Storage Error: {e}"
+                )
+
             papers.append({
-                "title": title,
-                "abstract": summary
-            })
+            "title": title,
+            "abstract": summary
+                })
 
         return papers
-
 
     def search(self, query):
 

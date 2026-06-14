@@ -13,3 +13,11 @@ app.include_router(upload_router)
 from backend.routes.analyze import router as analyze_router
 
 app.include_router(analyze_router)
+
+from backend.routes.semantic_search import (
+    router as semantic_router
+)
+
+app.include_router(
+    semantic_router
+)
