@@ -1,5 +1,12 @@
 from pypdf import PdfReader
 from backend.gemini_client import model
+from backend.services.entity_extractor import extract_entities
+
+
+from backend.services.relationship_extractor import extract_relationships
+
+
+from backend.services.graph_service import create_node,create_relationship
 
 
 class ReaderAgent:
@@ -45,12 +52,67 @@ class ReaderAgent:
         return response.text
 
 
-    def analyze_paper(self, pdf_path):
+    def analyze_paper(
+        self,
+        pdf_path
+    ):
 
         text = self.extract_text(
             pdf_path
         )
 
-        return self.summarize_paper(
+        try:
+
+            entities = extract_entities(
+                text
+            )
+
+        except:
+
+            entities = []
+
+        for entity in entities:
+
+            try:
+
+                create_node(
+                    entity
+                )
+
+            except Exception as e:
+
+                print(e)
+
+        try:
+
+            relationships = extract_relationships(
+                text
+            )
+
+        except:
+
+            relationships = []
+
+        for rel in relationships:
+
+            try:
+
+                create_relationship(
+
+                    rel["source"],
+
+                    rel["relationship"],
+
+                    rel["target"]
+
+                )
+
+            except Exception as e:
+
+                print(e)
+
+        summary = self.summarize_paper(
             text
         )
+
+        return summary

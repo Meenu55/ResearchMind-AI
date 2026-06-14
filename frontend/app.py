@@ -20,17 +20,30 @@ if st.button("Search"):
 
     results = response.json()
 
-    for paper in results["results"]:
+    papers = results.get(
+        "results",
+        []
+    )
 
-        st.subheader(
-            paper["title"]
+    if not papers:
+
+        st.warning(
+            "No papers found"
         )
 
-        st.write(
-            paper["abstract"]
-        )
+    else:
 
-        st.divider()
+        for paper in papers:
+
+            st.subheader(
+                paper["title"]
+            )
+
+            st.write(
+                paper["abstract"]
+            )
+
+            st.divider()
 uploaded_file = st.file_uploader(
     "Upload Research Paper",
     type=["pdf"]
@@ -77,4 +90,65 @@ if uploaded_file:
                 analysis_response.text
             )
             
-    
+st.header(
+    "Semantic Search"
+)
+
+semantic_query = st.text_input(
+    "Ask ResearchMind"
+)
+if st.button(
+    "Semantic Search"
+):
+
+    response = requests.get(
+        "http://127.0.0.1:8000/semantic-search",
+        params={
+            "query": semantic_query
+        }
+    )
+
+    results = response.json()
+
+
+    if "documents" in results:
+
+
+        documents = results["documents"][0]
+
+        for doc in documents:
+
+            st.markdown(doc)
+
+            st.divider()
+
+    else:
+
+        st.error(
+            "No documents returned"
+        )
+
+st.header(
+    "Knowledge Graph"
+)
+
+topic = st.text_input(
+    "Research Topic"
+)
+
+if st.button(
+    "Explore Graph"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/graph",
+
+        params={
+            "topic": topic
+        }
+    )
+
+    st.write(
+        response.json()
+    )
