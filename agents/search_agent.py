@@ -1,6 +1,8 @@
 import requests
 import xml.etree.ElementTree as ET
-
+from backend.services.vector_service import (
+    store_paper
+)
 
 class SearchAgent:
 
