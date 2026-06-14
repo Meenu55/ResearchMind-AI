@@ -21,3 +21,11 @@ from backend.routes.semantic_search import (
 app.include_router(
     semantic_router
 )
+
+from backend.routes.graph import (
+    router as graph_router
+)
+
+app.include_router(
+    graph_router
+)
