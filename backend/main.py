@@ -37,3 +37,19 @@ from backend.routes.graph_visualization import (
 app.include_router(
     graph_visual_router
 )
+
+from backend.routes.gaps import (
+    router as gaps_router
+)
+
+from backend.routes.ideas import (
+    router as ideas_router
+)
+
+app.include_router(
+    gaps_router
+)
+
+app.include_router(
+    ideas_router
+)
