@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 
+
 st.title(
     "ResearchMind AI"
 )
@@ -152,3 +153,59 @@ if st.button(
     st.write(
         response.json()
     )
+
+st.header(
+    "Knowledge Graph Visualization"
+)
+
+if st.button(
+    "Visualize Graph"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/graph-data"
+    )
+
+    relationships = (
+        response.json()
+    )
+
+st.header(
+    "Research Gap Analysis"
+)
+topic = st.text_input(
+    "Research Domain"
+)
+if st.button(
+    "Analyze Gaps"
+):
+    response = requests.post(
+
+    "http://127.0.0.1:8000/gaps",
+
+    json={
+        "papers": papers
+    }
+)
+
+    gaps = response.json()
+    st.markdown(
+    gaps["gaps"]
+)
+    
+if st.button(
+    "Generate Ideas"
+):
+    response = requests.post(
+
+    "http://127.0.0.1:8000/ideas",
+
+    json={
+        "gaps":
+        gaps["gaps"]
+    }
+)
+
+    ideas = response.json()
+    st.markdown(ideas["ideas"])

@@ -29,3 +29,27 @@ from backend.routes.graph import (
 app.include_router(
     graph_router
 )
+
+from backend.routes.graph_visualization import (
+    router as graph_visual_router
+)
+
+app.include_router(
+    graph_visual_router
+)
+
+from backend.routes.gaps import (
+    router as gaps_router
+)
+
+from backend.routes.ideas import (
+    router as ideas_router
+)
+
+app.include_router(
+    gaps_router
+)
+
+app.include_router(
+    ideas_router
+)
