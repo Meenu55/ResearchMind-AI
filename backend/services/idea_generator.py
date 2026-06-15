@@ -11,15 +11,13 @@ Based on these gaps:
 
 {gaps}
 
-Generate:
+Generate ideas that are:
 
-1. Novel project ideas
-
-2. Startup ideas
-
-3. Research directions
-
-4. MVP concepts
+- Novel
+- Technically feasible
+- Publishable
+- Startup worthy
+- Suitable for final year projects
 
 """
 
