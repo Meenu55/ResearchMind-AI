@@ -1,15 +1,38 @@
-from agents.search_agent import (
-    SearchAgent
-)
+from backend.gemini_client import model
 
-from agents.gap_agent import (
-    GapAgent
-)
 
-from agents.innovation_agent import (
-    InnovationAgent
-)
+class ReportAgent:
 
-from agents.report_agent import (
-    ReportAgent
-)
+    def build_report(
+        self,
+        papers,
+        gaps,
+        ideas
+    ):
+
+        prompt = f"""
+        Create a professional research intelligence report.
+
+        Papers:
+        {papers}
+
+        Research Gaps:
+        {gaps}
+
+        Novel Ideas:
+        {ideas}
+
+        Include:
+
+        1. Executive Summary
+        2. Key Papers
+        3. Research Gaps
+        4. Novel Ideas
+        5. Future Directions
+        """
+
+        response = model.generate_content(
+            prompt
+        )
+
+        return response.text

@@ -53,3 +53,11 @@ app.include_router(
 app.include_router(
     ideas_router
 )
+
+from backend.routes.research import (
+    router as research_router
+)
+
+app.include_router(
+    research_router
+)
