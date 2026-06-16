@@ -14,6 +14,19 @@ authors TEXT,
 abstract TEXT
 )
 """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS ideas(
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    topic TEXT,
+
+    idea TEXT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+)
+""")
 
 conn.commit()
 

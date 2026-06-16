@@ -209,3 +209,30 @@ if st.button(
 
     ideas = response.json()
     st.markdown(ideas["ideas"])
+
+st.header(
+    "Research Intelligence"
+)
+
+topic = st.text_input(
+    "Research Topic"
+)
+
+if st.button(
+    "Generate Research Report"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/research",
+
+        params={
+            "topic": topic
+        }
+    )
+
+    report = response.json()
+
+    st.markdown(
+        report["report"]
+    )
