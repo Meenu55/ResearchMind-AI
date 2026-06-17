@@ -134,7 +134,7 @@ st.header(
 )
 
 topic = st.text_input(
-    "Research Topic"
+    "Research Topic", key="graph_topic"
 )
 
 if st.button(
@@ -175,7 +175,7 @@ st.header(
     "Research Gap Analysis"
 )
 topic = st.text_input(
-    "Research Domain"
+    "Research Domain", key="gaps_topic"
 )
 if st.button(
     "Analyze Gaps"
@@ -215,7 +215,7 @@ st.header(
 )
 
 topic = st.text_input(
-    "Research Topic"
+    "Research Topic" , key="report_topic"
 )
 
 if st.button(

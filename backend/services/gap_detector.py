@@ -1,5 +1,7 @@
 from backend.gemini_client import model
-
+from backend.services.llm_service import (
+    safe_generate
+)
 def collect_insights(
     papers
 ):
@@ -48,8 +50,8 @@ Papers:
 
 """
 
-    response = model.generate_content(
+    result = safe_generate(
         prompt
     )
 
-    return response.text
+    return result

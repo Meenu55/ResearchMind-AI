@@ -1,22 +1,51 @@
-from backend.gemini_client import model
+from backend.services.llm_service import (
+    safe_generate
+)
+
+import json
+
 
 def extract_relationships(text):
 
     prompt = f"""
-
 Extract relationships.
 
-Return JSON.
+Return ONLY JSON.
+
+Example:
+
+[
+  {{
+    "source":"Transformer",
+    "relationship":"USED_FOR",
+    "target":"Medical Diagnosis"
+  }}
+]
 
 Text:
 
-{text}
-
+{text[:4000]}
 """
 
-    response = model.generate_content(
-        prompt
-    )
+    try:
 
-    return response.text
+        response = safe_generate(
+            prompt
+        )
+
+        if not response:
+
+            return []
+
+        return json.loads(
+            response
+        )
+
+    except Exception as e:
+
+        print(
+            f"Relationship Error: {e}"
+        )
+
+        return []
 
