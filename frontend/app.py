@@ -265,3 +265,21 @@ if st.button(
     st.markdown(
         review["review"]
     )
+
+if st.button(
+    "Export Review"
+):
+
+    response = requests.post(
+
+        "http://127.0.0.1:8000/export-review",
+
+        json={
+            "review":
+            review["review"]
+        }
+    )
+
+    st.success(
+        "Review exported"
+    )
