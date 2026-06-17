@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/ResearchMind-AI-6366f1?style=for-the-badge&logoColor=white" alt="ResearchMind AI" height="48"/>
 
 # ResearchMind AI
 
