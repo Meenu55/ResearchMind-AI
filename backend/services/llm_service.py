@@ -8,35 +8,50 @@ def generate_text(prompt):
     if USE_MOCKS:
 
         return """
-# Introduction
 
-Agentic AI is an emerging research area.
+# Title
 
-# Related Work
+ResearchMind AI
 
-Several studies explore multi-agent systems.
+# Abstract
 
-# Methodologies
+A multi-agent platform for automated
+research intelligence.
 
-Transformer architectures dominate.
+# Problem Statement
 
-# Research Trends
+Researchers spend significant time
+reviewing literature manually.
 
-Agentic AI and multimodal systems.
+# Objectives
 
-# Limitations
+- Automate literature review
+- Detect research gaps
+- Generate research proposals
 
-Scalability remains challenging.
+# Methodology
 
-# Future Directions
+Search Agent
+Reader Agent
+Gap Agent
+Proposal Agent
 
-Collaborative autonomous agents.
+# Expected Outcomes
 
-# Conclusion
+Improved research productivity.
 
-Promising field for future research.
+# Timeline
+
+Month 1:
+Literature Review
+
+Month 2:
+Implementation
+
+Month 3:
+Evaluation
+
 """
-
     try:
 
         response = model.generate_content(
