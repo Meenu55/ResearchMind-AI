@@ -236,3 +236,32 @@ if st.button(
     st.markdown(
         report["report"]
     )
+
+st.header(
+    "Literature Review Generator"
+)
+
+review_topic = st.text_input(
+    "Research Topic",
+    key="review"
+)
+
+if st.button(
+    "Generate Literature Review"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/literature-review",
+
+        params={
+            "topic":
+            review_topic
+        }
+    )
+
+    review = response.json()
+
+    st.markdown(
+        review["review"]
+    )

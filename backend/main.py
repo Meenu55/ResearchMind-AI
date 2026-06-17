@@ -61,3 +61,11 @@ from backend.routes.research import (
 app.include_router(
     research_router
 )
+
+from backend.routes.literature_review import (
+    router as literature_router
+)
+
+app.include_router(
+    literature_router
+)
