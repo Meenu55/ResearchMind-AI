@@ -1,21 +1,45 @@
-from backend.gemini_client import model
+from backend.services.llm_service import (
+    safe_generate
+)
+
+import json
+
 
 def extract_entities(text):
 
     prompt = f"""
+Extract the important entities from the following research text.
 
-Extract research entities.
+Return ONLY a JSON list.
 
-Return only JSON.
+Example:
+
+["Transformer", "BERT", "Medical Diagnosis"]
 
 Text:
 
-{text}
-
+{text[:4000]}
 """
 
-    response = model.generate_content(
-        prompt
-    )
+    try:
 
-    return response.text
+        response = safe_generate(
+            prompt
+        )
+
+        if not response:
+
+            return []
+
+        return json.loads(
+            response
+        )
+
+    except Exception as e:
+
+        print(
+            f"Entity Error: {e}"
+        )
+
+        return []
+

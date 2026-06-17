@@ -1,5 +1,8 @@
 from backend.gemini_client import model
 
+from backend.services.llm_service import (
+    safe_generate
+)
 
 def generate_ideas(
     gaps
@@ -21,8 +24,8 @@ Generate ideas that are:
 
 """
 
-    response = model.generate_content(
+    result = safe_generate(
         prompt
     )
 
-    return response.text
+    return result

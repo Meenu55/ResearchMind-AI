@@ -2,7 +2,9 @@ from pypdf import PdfReader
 from backend.gemini_client import model
 from backend.services.entity_extractor import extract_entities
 
-
+from backend.services.llm_service import (
+    safe_generate
+)
 from backend.services.relationship_extractor import extract_relationships
 
 
@@ -45,11 +47,11 @@ class ReaderAgent:
         {text[:20000]}
         """
 
-        response = model.generate_content(
-            prompt
-        )
+        result = safe_generate(
+    prompt
+)
 
-        return response.text
+        return result
 
 
     def analyze_paper(
@@ -69,8 +71,10 @@ class ReaderAgent:
 
         except:
 
-            entities = []
-
+            entities = (
+    extract_entities(text)
+    or []
+)
         for entity in entities:
 
             try:
@@ -98,18 +102,16 @@ class ReaderAgent:
             try:
 
                 create_relationship(
-
                     rel["source"],
-
                     rel["relationship"],
-
                     rel["target"]
-
                 )
 
             except Exception as e:
 
-                print(e)
+                print(
+                    f"Graph Error: {e}"
+                )
 
         summary = self.summarize_paper(
             text

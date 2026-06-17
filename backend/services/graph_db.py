@@ -6,6 +6,6 @@ driver = GraphDatabase.driver(
 
     auth=(
         "neo4j",
-        "researchmind123"
+        "password123"
     )
 )
