@@ -236,3 +236,106 @@ if st.button(
     st.markdown(
         report["report"]
     )
+
+st.header(
+    "Literature Review Generator"
+)
+
+review_topic = st.text_input(
+    "Research Topic",
+    key="review"
+)
+
+if st.button(
+    "Generate Literature Review"
+):
+
+    response = requests.get(
+
+        "http://127.0.0.1:8000/literature-review",
+
+        params={
+            "topic":
+            review_topic
+        }
+    )
+
+    review = response.json()
+
+    st.markdown(
+        review["review"]
+    )
+
+if st.button(
+    "Export Review"
+):
+
+    response = requests.post(
+
+        "http://127.0.0.1:8000/export-review",
+
+        json={
+            "review":
+            review["review"]
+        }
+    )
+
+    st.success(
+        "Review exported"
+    )
+
+st.header(
+    "Research Proposal Generator"
+)
+
+proposal_topic = st.text_input(
+    "Proposal Topic"
+)
+
+if st.button(
+    "Generate Proposal"
+):
+
+    response = requests.post(
+
+        "http://127.0.0.1:8000/proposal",
+
+        json={
+
+            "topic":
+            proposal_topic,
+
+            "gaps":
+            gaps,
+
+            "ideas":
+            ideas,
+
+            "literature_review":
+            review
+        }
+    )
+
+    proposal = response.json()
+
+    st.markdown(
+        proposal["proposal"]
+    )
+
+if st.button(
+    "Export Proposal"
+):
+    response = requests.post(
+
+    "http://127.0.0.1:8000/export-proposal",
+
+    json={
+
+        "proposal":
+        proposal["proposal"]
+    }
+)
+
+st.success(
+    "Proposal exported"
+)

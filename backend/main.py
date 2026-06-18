@@ -61,3 +61,48 @@ from backend.routes.research import (
 app.include_router(
     research_router
 )
+
+from backend.routes.literature_review import (
+    router as literature_router
+)
+
+app.include_router(
+    literature_router
+)
+
+from backend.routes.proposal import (
+    router as proposal_router
+)
+
+app.include_router(
+    proposal_router
+)
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+
+    allow_origins=[
+
+        "http://localhost:3000",
+
+        "http://localhost:5173",
+
+        "http://127.0.0.1:5173",
+
+        "http://127.0.0.1:3000",
+
+        "http://localhost:8080",
+
+        "http://127.0.0.1:8080"
+
+    ],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"]
+
+)
