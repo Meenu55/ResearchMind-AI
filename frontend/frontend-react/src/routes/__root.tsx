@@ -9,6 +9,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/lib/theme";
 import { AppShell } from "@/components/app-shell";
+import { Toaster } from "@/components/ui/sonner";
+
 
 function NotFoundComponent() {
   return (
@@ -84,7 +86,9 @@ function RootComponent() {
         <AppShell>
           <Outlet />
         </AppShell>
+        <Toaster position="bottom-right" richColors closeButton />
       </ThemeProvider>
     </QueryClientProvider>
+
   );
 }

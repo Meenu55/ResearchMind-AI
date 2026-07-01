@@ -1,5 +1,6 @@
 from pypdf import PdfReader
-from backend.gemini_client import model
+from sqlalchemy import text
+from backend.services.graph_db import graph
 from backend.services.entity_extractor import extract_entities
 
 from backend.services.llm_service import (
@@ -12,46 +13,73 @@ from backend.services.graph_service import create_node,create_relationship
 
 
 class ReaderAgent:
-
+    
     def extract_text(self, pdf_path):
 
         reader = PdfReader(pdf_path)
 
         text = ""
 
-        for page in reader.pages:
+        for page in reader.pages[:5]:
 
             page_text = page.extract_text()
 
             if page_text:
-                text += page_text
+                text += page_text + "\n"
 
         return text
-
 
     def summarize_paper(self, text):
 
         prompt = f"""
-        Analyze this research paper.
+    You are an expert research paper reviewer.
 
-        Extract:
+    Analyze the research paper below.
 
-        1. Objective
-        2. Methodology
-        3. Findings
-        4. Limitations
-        5. Future Work
+    IMPORTANT RULES:
 
-        Paper:
+    - NEVER copy or quote any part of the paper.
+    - NEVER reproduce equations.
+    - NEVER reproduce paragraphs.
+    - NEVER include the original paper text.
+    - ONLY produce your own analysis.
+    - Start directly with "# Objective".
+    - Return ONLY markdown.
 
-        {text[:20000]}
-        """
+    Use exactly this format:
 
-        result = safe_generate(
-    prompt
-)
+    # Objective
+
+    (2-4 sentences)
+
+    # Methodology
+
+    (Explain the approach)
+
+    # Key Findings
+
+    (Bullet points)
+
+    # Limitations
+
+    (Bullet points)
+
+    # Future Work
+
+    (Bullet points)
+
+    Research Paper:
+
+    {text[:6000]}
+    """
+
+        result = safe_generate(prompt)
+
+        if not result:
+            return "Unable to analyze the paper."
 
         return result
+
 
 
     def analyze_paper(
@@ -75,13 +103,25 @@ class ReaderAgent:
     extract_entities(text)
     or []
 )
+        IGNORE = {
+    "paper",
+    "research",
+    "study",
+    "method",
+    "approach",
+    "model",
+    "system",
+    "framework"
+}
+
         for entity in entities:
+
+            if entity.lower() in IGNORE:
+                continue
 
             try:
 
-                create_node(
-                    entity
-                )
+                create_node(entity)
 
             except Exception as e:
 
@@ -99,11 +139,25 @@ class ReaderAgent:
 
         for rel in relationships:
 
+            if (
+                "source" not in rel
+                or "target" not in rel
+                or "relationship" not in rel
+            ):
+                continue
+
+            relationship = (
+                rel["relationship"]
+                .upper()
+                .replace(" ", "_")
+                .replace("-", "_")
+            )
+
             try:
 
-                create_relationship(
+                graph.create_relationship(
                     rel["source"],
-                    rel["relationship"],
+                    relationship,
                     rel["target"]
                 )
 

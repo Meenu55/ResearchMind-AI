@@ -106,3 +106,17 @@ app.add_middleware(
     allow_headers=["*"]
 
 )
+
+from backend.routes.node_details import (
+    router as node_router
+)
+
+app.include_router(
+    node_router
+)
+
+from backend.routes.paper_analysis import router as paper_analysis_router
+
+app.include_router(
+    paper_analysis_router
+)

@@ -1,20 +1,16 @@
-from backend.gemini_client import model
+from backend.services.llm_service import safe_generate
 
-from backend.services.llm_service import (
-    safe_generate
-)
 
-def generate_ideas(
-    gaps
-):
+def generate_ideas(topic):
 
     prompt = f"""
+You are a senior AI researcher.
 
-Based on these gaps:
+Generate 5 novel research ideas for:
 
-{gaps}
+{topic}
 
-Generate ideas that are:
+Requirements:
 
 - Novel
 - Technically feasible
@@ -22,10 +18,23 @@ Generate ideas that are:
 - Startup worthy
 - Suitable for final year projects
 
+For each idea provide:
+
+## Title
+
+## Problem
+
+## Methodology
+
+## Innovation
+
+## Expected Impact
+
+Return markdown only.
 """
 
-    result = safe_generate(
-        prompt
-    )
+    result = safe_generate(prompt)
 
+    if not result:
+        return "AI generation temporarily unavailable."
     return result

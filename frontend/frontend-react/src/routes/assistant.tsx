@@ -1,210 +1,283 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import { ArrowRight, Check, Circle, Loader2, AlertCircle } from "lucide-react";
-import { agents, suggestedTopics } from "@/lib/ui-config";
+import {
+  ArrowRight, Loader2, BookOpen, FileSearch, Network,
+  Lightbulb, Sparkles, FileText, Search, ScrollText, RefreshCw, Check, Wand2,
+} from "lucide-react";
+import { suggestedTopics } from "@/lib/ui-config";
 import { generateResearch } from "@/services/researchService";
-import { cn } from "@/lib/utils";
+import { useResearchStore, type WorkspaceTab } from "@/store/researchStore";
+import { TopicProvider, useTopic } from "@/context/TopicContext";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  ReportPanel, PapersPanel, ReviewPanel,
+  GapsPanel, IdeasPanel, ProposalPanel, GraphPanel, SemanticPanel,
+} from "@/components/workspace/panels";
+import { ErrorState } from "@/components/workspace/states";
+
+type AssistantSearch = { topic?: string; tab?: WorkspaceTab };
+
+const VALID_TABS: WorkspaceTab[] = ["report", "papers", "semantic", "review", "gaps", "ideas", "proposal", "graph"];
 
 export const Route = createFileRoute("/assistant")({
+  validateSearch: (s: Record<string, unknown>): AssistantSearch => ({
+    topic: typeof s.topic === "string" ? s.topic : undefined,
+    tab: typeof s.tab === "string" && (VALID_TABS as string[]).includes(s.tab)
+      ? (s.tab as WorkspaceTab) : undefined,
+  }),
   head: () => ({ meta: [
-    { title: "Research Assistant — ResearchMind AI" },
-    { name: "description", content: "Run the multi-agent research pipeline on any topic." },
+    { title: "Research Workspace — ResearchMind AI" },
+    { name: "description", content: "Enter a topic once, then explore the report, papers, gaps, ideas, review, proposal and knowledge graph." },
   ]}),
-  component: AssistantPage,
+  component: () => (
+    <TopicProvider>
+      <AssistantPage />
+    </TopicProvider>
+  ),
 });
 
-type Status = "pending" | "running" | "completed";
+const TABS: { value: WorkspaceTab; label: string; icon: any }[] = [
+  { value: "report",   label: "Report",            icon: ScrollText },
+  { value: "papers",   label: "Papers",            icon: FileSearch },
+  { value: "semantic", label: "Semantic Search",   icon: Wand2 },
+  { value: "review",   label: "Literature Review", icon: BookOpen },
+  { value: "gaps",     label: "Research Gaps",     icon: Lightbulb },
+  { value: "ideas",    label: "Ideas",             icon: Sparkles },
+  { value: "proposal", label: "Proposal",          icon: FileText },
+  { value: "graph",    label: "Knowledge Graph",   icon: Network },
+];
+
+const AGENTS = [
+  { key: "search",   label: "Search Agent" },
+  { key: "review",   label: "Review Agent" },
+  { key: "gap",      label: "Gap Agent" },
+  { key: "proposal", label: "Proposal Agent" },
+];
 
 function AssistantPage() {
-  const [topic, setTopic] = useState("");
-  const [statuses, setStatuses] = useState<Record<string, Status>>(
-    () => Object.fromEntries(agents.map((a) => [a.name, "pending"])) as Record<string, Status>,
-  );
-  const research = useMutation({ mutationFn: (t: string) => generateResearch(t) });
+  const { topic: topicParam, tab: tabParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
-  // Animate agent statuses while the request is in flight.
-  useEffect(() => {
-    if (!research.isPending) return;
-    setStatuses(Object.fromEntries(agents.map((a) => [a.name, "pending"])) as Record<string, Status>);
-    const timers: number[] = [];
-    agents.forEach((a, i) => {
-      timers.push(window.setTimeout(() => {
-        setStatuses((s) => ({ ...s, [a.name]: "running" }));
-      }, 250 + i * 500));
-    });
-    return () => timers.forEach(window.clearTimeout);
-  }, [research.isPending]);
+  const { topic: currentTopic, resetForNewTopic } = useTopic();
+  const researchReport = useResearchStore((s) => s.researchReport);
+  const activeTab = useResearchStore((s) => s.activeTab);
+  const setReport = useResearchStore((s) => s.setReport);
+  const setActiveTab = useResearchStore((s) => s.setActiveTab);
 
+  const [draft, setDraft] = useState(currentTopic);
+  const [editing, setEditing] = useState(!currentTopic);
+
+  const research = useMutation({
+    mutationFn: (t: string) => generateResearch(t),
+    onSuccess: (data) => {
+      setReport(data.report ?? "");
+      setActiveTab("report");
+    },
+  });
+
+  // Sync URL ?tab=
   useEffect(() => {
-    if (research.isSuccess) {
-      setStatuses(Object.fromEntries(agents.map((a) => [a.name, "completed"])) as Record<string, Status>);
+    if (tabParam && tabParam !== activeTab) setActiveTab(tabParam);
+  }, [tabParam]);
+
+  // Auto-run when a new topic arrives via URL
+  const autoRan = useRef<string | null>(null);
+  useEffect(() => {
+    const t = topicParam?.trim();
+    if (!t || autoRan.current === t) return;
+    autoRan.current = t;
+    setDraft(t);
+    setEditing(false);
+    if (t !== currentTopic || !researchReport) {
+      resetForNewTopic(t);
+      research.mutate(t);
     }
-  }, [research.isSuccess]);
+  }, [topicParam]);
 
-  const sections = research.data ? splitReport(research.data.report) : null;
+  const submitTopic = (t: string) => {
+    const topic = t.trim();
+    if (!topic) return;
+    resetForNewTopic(topic);
+    setDraft(topic);
+    setEditing(false);
+    research.mutate(topic);
+    navigate({ search: { topic, tab: "report" } });
+  };
+
+  const onTabChange = (v: string) => {
+    const next = v as WorkspaceTab;
+    setActiveTab(next);
+    navigate({ search: (prev: AssistantSearch) => ({ ...prev, tab: next }) });
+  };
+
+  const hasWorkspace = !!currentTopic && (!!researchReport || research.isPending);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 py-10">
-          <header>
-            <h1 className="text-2xl font-semibold tracking-tight">Research Assistant</h1>
-            <p className="text-sm text-muted-foreground mt-1">Submit a topic — the multi-agent pipeline produces a complete research dashboard.</p>
-          </header>
-
-          <form
-            onSubmit={(e) => { e.preventDefault(); if (topic.trim()) research.mutate(topic.trim()); }}
-            className="mt-6 flex gap-2"
+    <div className="max-w-6xl mx-auto px-5 md:px-8 py-8 md:py-10">
+      {/* ════════ Topic header ════════ */}
+      <AnimatePresence mode="wait">
+        {!currentTopic || editing ? (
+          <motion.section
+            key="entry"
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
           >
-            <input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Multimodal LLMs for clinical reasoning"
-              className="flex-1 h-11 rounded-lg border border-border bg-card px-4 text-sm outline-none focus:border-foreground/30"
-            />
-            <button
-              type="submit"
-              disabled={research.isPending || !topic.trim()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium disabled:opacity-50"
+            <div className="text-center max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-foreground pulse-dot" />
+                Research Workspace
+              </div>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mt-4">
+                What would you like to research?
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground mt-2">
+                Enter a topic once — ResearchMind will generate a report and unlock papers, gaps, ideas, reviews,
+                proposals and a knowledge graph.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => { e.preventDefault(); submitTopic(draft); }}
+              className="mt-7 max-w-2xl mx-auto"
             >
-              {research.isPending ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-              {research.isPending ? "Researching…" : "Start research"}
-            </button>
-          </form>
-
-          {!research.data && !research.isPending && (
-            <div className="mt-6 grid sm:grid-cols-3 gap-2">
-              {suggestedTopics.slice(0, 3).map((t) => (
+              <div className="relative">
+                <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="e.g. Agentic AI, Multimodal Healthcare, Diffusion models for science…"
+                  className="w-full h-14 pl-11 pr-36 rounded-2xl border border-border bg-card text-[15px] outline-none focus:border-foreground/40 shadow-sm"
+                />
                 <button
-                  key={t.title}
-                  onClick={() => { setTopic(t.title); research.mutate(t.title); }}
-                  className="text-left rounded-xl border border-border bg-card p-4 text-sm hover:border-foreground/30 transition"
+                  type="submit"
+                  disabled={research.isPending || !draft.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-xl bg-foreground text-background px-4 h-10 text-sm font-medium disabled:opacity-50 hover:opacity-90 transition"
                 >
-                  <div className="font-medium">{t.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{t.desc}</div>
+                  {research.isPending ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+                  {research.isPending ? "Researching" : "Start research"}
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            </form>
 
-          {research.isError && (
-            <div className="mt-6 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive p-3 text-sm flex items-start gap-2">
-              <AlertCircle className="size-4 mt-0.5 shrink-0" />
-              <span>{(research.error as Error).message}</span>
-            </div>
-          )}
-
-          {research.isPending && <ReportSkeleton />}
-
-          {sections && (
-            <div className="mt-10 space-y-10">
-              <Section title="Research Report" md={sections.report} />
-              <Section title="Key Findings" md={sections.findings} />
-              <Section title="Research Gaps" md={sections.gaps} />
-              <Section title="Generated Ideas" md={sections.ideas} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <aside className="hidden lg:flex w-80 shrink-0 border-l border-border bg-surface flex-col">
-        <div className="px-5 h-14 flex items-center border-b border-border">
-          <h2 className="text-sm font-semibold">Agents</h2>
-          <span className="ml-auto text-xs text-muted-foreground">
-            {Object.values(statuses).filter((s) => s === "completed").length}/{agents.length}
-          </span>
-        </div>
-        <div className="p-3 space-y-1.5 overflow-y-auto">
-          {agents.map((a) => {
-            const s = statuses[a.name];
-            return (
-              <div key={a.name} className="rounded-lg border border-border bg-card p-3">
-                <div className="flex items-center gap-2.5">
-                  <StatusIcon status={s} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{a.name}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">{a.desc}</div>
-                  </div>
-                  <StatusBadge status={s} />
+            {!research.isPending && !research.isError && (
+              <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-2 max-w-3xl mx-auto">
+                {suggestedTopics.slice(0, 6).map((t, i) => (
+                  <motion.button
+                    key={t.title}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i }}
+                    onClick={() => submitTopic(t.title)}
+                    className="text-left rounded-xl border border-border bg-card p-4 text-sm hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-sm transition-all"
+                  >
+                    <div className="font-medium">{t.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{t.desc}</div>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </motion.section>
+        ) : (
+          <motion.section
+            key="header"
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            className="rounded-2xl border border-border bg-card/60 backdrop-blur p-5 md:p-6"
+          >
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+              <div className="min-w-0">
+                <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Current topic</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <h1 className="text-xl md:text-2xl font-semibold tracking-tight truncate">{currentTopic}</h1>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
+                    <span className={`size-1.5 rounded-full ${research.isPending ? "bg-amber-400 pulse-dot" : "bg-green-500"}`} />
+                    {research.isPending ? "Working" : "Ready"}
+                  </span>
                 </div>
               </div>
-            );
-          })}
+
+              <div className="flex flex-wrap items-center gap-3 ml-auto">
+                {AGENTS.map((a) => (
+                  <div key={a.key} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    {research.isPending ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <span className="size-4 rounded-full bg-green-500/15 text-green-500 grid place-items-center">
+                        <Check className="size-2.5" />
+                      </span>
+                    )}
+                    {a.label}
+                  </div>
+                ))}
+                <div className="w-px h-5 bg-border" />
+                <button
+                  onClick={() => { setEditing(true); setDraft(currentTopic); }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card hover:bg-muted px-3 py-1.5 text-xs font-medium"
+                >
+                  <RefreshCw className="size-3.5" /> Change topic
+                </button>
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {research.isError && (
+        <div className="mt-6">
+          <ErrorState
+            message={(research.error as Error).message}
+            onRetry={() => currentTopic && research.mutate(currentTopic)}
+          />
         </div>
-      </aside>
+      )}
+
+      {/* ════════ Workspace tabs ════════ */}
+      <AnimatePresence>
+        {hasWorkspace && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="mt-8"
+          >
+            <Tabs value={activeTab} onValueChange={onTabChange}>
+              <div className="overflow-x-auto -mx-2 px-2 pb-1">
+                <TabsList className="flex w-max h-auto bg-card border border-border p-1 gap-1 rounded-xl">
+                  {TABS.map(({ value, label, icon: Icon }) => (
+                    <TabsTrigger
+                      key={value}
+                      value={value}
+                      className="gap-1.5 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg px-3 py-1.5 text-xs md:text-sm whitespace-nowrap transition-colors"
+                    >
+                      <Icon className="size-3.5" /> {label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+
+              <div className="mt-6">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <TabsContent value="report">
+                      <ReportPanel isGenerating={research.isPending} />
+                    </TabsContent>
+                    <TabsContent value="papers"><PapersPanel /></TabsContent>
+                    <TabsContent value="semantic"><SemanticPanel /></TabsContent>
+                    <TabsContent value="review"><ReviewPanel /></TabsContent>
+                    <TabsContent value="gaps"><GapsPanel /></TabsContent>
+                    <TabsContent value="ideas"><IdeasPanel /></TabsContent>
+                    <TabsContent value="proposal"><ProposalPanel /></TabsContent>
+                    <TabsContent value="graph"><GraphPanel /></TabsContent>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </Tabs>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  );
-}
-
-/**
- * Split the report into the four dashboard sections.
- * Looks for markdown H1/H2 headings containing matching keywords.
- * Falls back to putting the entire report under "Research Report".
- */
-function splitReport(md: string) {
-  const out = { report: "", findings: "", gaps: "", ideas: "" };
-  const blocks = md.split(/\n(?=#{1,3}\s)/);
-  let assignedAny = false;
-  for (const block of blocks) {
-    const head = block.match(/^#{1,3}\s+(.+)/)?.[1]?.toLowerCase() ?? "";
-    const body = block.replace(/^#{1,3}\s+.+\n?/, "").trim();
-    if (/finding|insight/.test(head)) { out.findings += (out.findings ? "\n\n" : "") + body; assignedAny = true; }
-    else if (/gap|open problem|limitation/.test(head)) { out.gaps += (out.gaps ? "\n\n" : "") + body; assignedAny = true; }
-    else if (/idea|proposal|future|direction/.test(head)) { out.ideas += (out.ideas ? "\n\n" : "") + body; assignedAny = true; }
-    else { out.report += (out.report ? "\n\n" : "") + block; }
-  }
-  if (!assignedAny) out.report = md;
-  return out;
-}
-
-function Section({ title, md }: { title: string; md: string }) {
-  if (!md.trim()) return null;
-  return (
-    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      <h2 className="text-lg font-semibold tracking-tight border-b border-border pb-2">{title}</h2>
-      <article className="mt-4 prose prose-sm dark:prose-invert max-w-none">
-        <ReactMarkdown>{md}</ReactMarkdown>
-      </article>
-    </motion.section>
-  );
-}
-
-function ReportSkeleton() {
-  return (
-    <div className="mt-10 space-y-8">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="space-y-2 animate-pulse">
-          <div className="h-5 w-48 bg-muted rounded" />
-          <div className="h-3 w-full bg-muted rounded" />
-          <div className="h-3 w-11/12 bg-muted rounded" />
-          <div className="h-3 w-9/12 bg-muted rounded" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StatusIcon({ status }: { status: Status }) {
-  if (status === "completed") return <div className="size-6 rounded-full bg-foreground text-background grid place-items-center"><Check className="size-3.5" /></div>;
-  if (status === "running") return <div className="size-6 rounded-full bg-muted grid place-items-center"><Loader2 className="size-3.5 animate-spin" /></div>;
-  return <div className="size-6 rounded-full bg-muted grid place-items-center"><Circle className="size-2 fill-muted-foreground text-muted-foreground" /></div>;
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  const map = { pending: "text-muted-foreground", running: "text-foreground", completed: "text-muted-foreground" } as const;
-  const label = { pending: "Pending", running: "Running", completed: "Done" }[status];
-  return (
-    <AnimatePresence mode="wait">
-      <motion.span
-        key={status}
-        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-        className={cn("text-[10px] uppercase tracking-wider", map[status])}
-      >
-        {label}
-      </motion.span>
-    </AnimatePresence>
   );
 }

@@ -1,24 +1,13 @@
 from fastapi import APIRouter
-
-from backend.services.gap_detector import (
-    identify_gaps
-)
+from agents.gap_agent import identify_gaps
 
 router = APIRouter()
 
-@router.post(
-    "/gaps"
-)
+@router.get("/gaps")
+def gaps(topic: str):
 
-def detect_gaps(
-    payload: dict
-):
+    result = identify_gaps(topic)
 
     return {
-
-        "gaps":
-
-        identify_gaps(
-            payload["papers"]
-        )
+        "gaps": result
     }

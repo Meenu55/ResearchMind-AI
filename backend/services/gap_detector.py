@@ -1,4 +1,3 @@
-from backend.gemini_client import model
 from backend.services.llm_service import (
     safe_generate
 )
@@ -23,35 +22,31 @@ def collect_insights(
     return insights
 
 def identify_gaps(
-    papers
+    topic
 ):
 
     prompt = f"""
-
 You are a research analyst.
 
-Analyze these papers.
+Find major research gaps in:
 
-Identify:
+{topic}
 
-1. Recurring limitations
+Include:
 
+1. Technical limitations
 2. Underexplored areas
-
 3. Missing technologies
-
-4. Research opportunities
-
-5. Future directions
-
-Papers:
-
-{papers}
-
+4. Open challenges
+5. Future opportunities
 """
 
     result = safe_generate(
         prompt
     )
 
+    result = safe_generate(prompt)
+
+    if not result:
+        return "AI generation temporarily unavailable."
     return result

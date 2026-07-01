@@ -1,8 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Home, MessageSquare, FileSearch, BookOpen, Network, Lightbulb,
-  Sparkles, FileText, BarChart3, Settings as SettingsIcon,
+  Home, MessageSquare, Network, BarChart3, Settings as SettingsIcon,
   Search, Sun, Moon, PanelLeftClose, PanelLeftOpen, Brain,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,23 +9,18 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/assistant", label: "Research Assistant", icon: MessageSquare },
-  { to: "/papers", label: "Paper Search", icon: FileSearch },
-  { to: "/semantic-search", label: "Semantic Search", icon: FileSearch },
-  { to: "/reviews", label: "Literature Reviews", icon: BookOpen },
-  { to: "/graph", label: "Knowledge Graph", icon: Network },
-  { to: "/gaps", label: "Research Gaps", icon: Lightbulb },
-  { to: "/ideas", label: "Idea Generator", icon: Sparkles },
-  { to: "/proposals", label: "Proposal Generator", icon: FileText },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/", label: "Home", icon: Home, search: undefined as any },
+  { to: "/assistant", label: "Research Assistant", icon: MessageSquare, search: undefined },
+  { to: "/graph", label: "Knowledge Graph", icon: Network, search: undefined },
+  { to: "/analytics", label: "Analytics", icon: BarChart3, search: undefined },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, search: undefined },
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const { theme, toggle } = useTheme();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
 
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground">
@@ -45,12 +39,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
         <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-          {nav.map(({ to, label, icon: Icon }) => {
-            const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+          {nav.map(({ to, label, icon: Icon, search }, i) => {
+            const tabKey = (search as any)?.tab as string | undefined;
+            const active =
+              to === "/" ? pathname === "/"
+              : to === "/assistant"
+                ? pathname.startsWith("/assistant") && (
+                    tabKey ? searchStr.includes(`tab=${tabKey}`) : !searchStr.includes("tab=")
+                  )
+                : pathname.startsWith(to);
             return (
               <Link
-                key={to}
+                key={`${to}-${label}-${i}`}
                 to={to}
+                search={search as any}
                 className={cn(
                   "group flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors",
                   active
