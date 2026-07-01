@@ -1,6 +1,4 @@
-from backend.services.llm_service import (
-    generate_text
-)
+from backend.services.llm_service import (safe_generate)
 
 class LiteratureReviewAgent:
 
@@ -42,6 +40,9 @@ Structure:
 
 """
 
-        return generate_text(
-            prompt
-        )
+        result = safe_generate(prompt)
+
+        if not result:
+            return "AI generation temporarily unavailable."
+        
+        return result

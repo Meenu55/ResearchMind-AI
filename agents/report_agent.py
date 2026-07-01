@@ -1,4 +1,4 @@
-from backend.gemini_client import model
+from backend.services.llm_service import safe_generate
 
 
 class ReportAgent:
@@ -31,8 +31,12 @@ class ReportAgent:
         5. Future Directions
         """
 
-        response = model.generate_content(
-            prompt
-        )
+     
 
-        return response.text
+        result = safe_generate(prompt)
+
+        if not result:
+            return "AI generation temporarily unavailable."
+        return result
+
+        

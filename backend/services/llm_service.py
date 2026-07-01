@@ -1,64 +1,34 @@
-from backend.gemini_client import model
+from groq import Groq
+import os
+from dotenv import load_dotenv
 
-USE_MOCKS = True
+load_dotenv()
+
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
+
+USE_MOCKS = False
 
 
 def generate_text(prompt):
 
     if USE_MOCKS:
+        return "Mock response"
 
-        return """
-
-# Title
-
-ResearchMind AI
-
-# Abstract
-
-A multi-agent platform for automated
-research intelligence.
-
-# Problem Statement
-
-Researchers spend significant time
-reviewing literature manually.
-
-# Objectives
-
-- Automate literature review
-- Detect research gaps
-- Generate research proposals
-
-# Methodology
-
-Search Agent
-Reader Agent
-Gap Agent
-Proposal Agent
-
-# Expected Outcomes
-
-Improved research productivity.
-
-# Timeline
-
-Month 1:
-Literature Review
-
-Month 2:
-Implementation
-
-Month 3:
-Evaluation
-
-"""
     try:
 
-        response = model.generate_content(
-            prompt
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
         )
 
-        return response.text
+        return response.choices[0].message.content
 
     except Exception as e:
 
@@ -71,6 +41,4 @@ Evaluation
 
 def safe_generate(prompt):
 
-    return generate_text(
-        prompt
-    )
+    return generate_text(prompt)

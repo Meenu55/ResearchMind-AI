@@ -1,61 +1,55 @@
 from backend.services.llm_service import (
-    generate_text
+    safe_generate
 )
 
 class ProposalAgent:
 
     def generate_proposal(
-
         self,
-
         topic,
-
-        gaps,
-
-        ideas,
-
-        literature_review
-
+        idea
     ):
 
         prompt = f"""
+You are an expert research advisor.
 
-Create a complete research proposal.
+Generate a detailed final-year project proposal.
 
-Topic:
+Research Domain:
 {topic}
 
-Research Gaps:
-{gaps}
+Selected Research Idea:
+{idea}
 
-Generated Ideas:
-{ideas}
+Include:
 
-Literature Review:
-{literature_review}
+1. Project Title
 
-Generate:
+2. Problem Statement
 
-1. Title
+3. Objectives
 
-2. Abstract
+4. Literature Background
 
-3. Problem Statement
-
-4. Objectives
-
-5. Methodology
+5. Proposed Methodology
 
 6. System Architecture
 
-7. Expected Outcomes
+7. Technologies Required
 
-8. Timeline
+8. Expected Outcomes
 
-9. Future Work
+9. Future Scope
 
+10. Implementation Timeline
+
+11. References
+
+Format using proper markdown.
 """
 
-        return generate_text(
-            prompt
-        )
+        result = safe_generate(prompt)
+
+        if not result:
+            return "AI generation temporarily unavailable."
+        return result

@@ -2,7 +2,7 @@ from backend.services.llm_service import (
     safe_generate
 )
 
-import json
+import json,re
 
 
 def extract_entities(text):
@@ -31,9 +31,13 @@ Text:
 
             return []
 
-        return json.loads(
+        response = re.sub(
+            r"```json|```",
+            "",
             response
-        )
+        ).strip()
+
+        return json.loads(response)
 
     except Exception as e:
 

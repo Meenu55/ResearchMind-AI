@@ -2,6 +2,17 @@ import requests
 import xml.etree.ElementTree as ET
 from backend.services.vector_service import store_paper
 import hashlib
+from backend.services.entity_extractor import (
+    extract_entities
+)
+
+from backend.services.relationship_extractor import (
+    extract_relationships
+)
+
+from backend.services.graph_db import (
+    graph
+)
 
 class SearchAgent:
 
@@ -38,6 +49,32 @@ class SearchAgent:
                 "atom:summary",
                 namespace
             ).text.strip()
+            entities = extract_entities(
+                summary
+            )
+
+            relationships = extract_relationships(
+                summary
+            )
+            for rel in relationships:
+
+                try:
+
+                    graph.create_relationship(
+
+                        rel["source"],
+
+                        rel["relationship"],
+
+                        rel["target"]
+
+                    )
+
+                except Exception as e:
+
+                    print(
+                        f"Graph Error: {e}"
+                    )
 
             # Unique ID for each paper
             paper_id = hashlib.md5(

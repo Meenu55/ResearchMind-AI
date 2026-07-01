@@ -1,20 +1,10 @@
-from backend.services.graph_db import (
-    driver
-)
+from backend.services.graph_db import graph
 
 def create_node(name):
 
-    with driver.session() as session:
-
-        session.run(
-            """
-            MERGE (n:Concept {
-                name:$name
-            })
-            """,
-            name=name
-        )
-
+    graph.create_node(
+        name
+    )
 
 def create_relationship(
     source,
@@ -22,21 +12,8 @@ def create_relationship(
     target
 ):
 
-    with driver.session() as session:
-
-        session.run(
-            """
-            MERGE (a:Concept {
-                name:$source
-            })
-
-            MERGE (b:Concept {
-                name:$target
-            })
-
-            MERGE (a)-[:RELATED]->(b)
-            """,
-
-            source=source,
-            target=target
-        )
+    graph.create_relationship(
+        source,
+        relation,
+        target
+    )
